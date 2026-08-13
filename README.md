@@ -14,13 +14,22 @@ BlockLock is a macOS application designed to help you stop procrastinating and m
 
 ## Requirements
 - macOS 14.0+
+- iOS 17.0+ (Simulator/Device for iOS version)
+- Xcode 15.0+
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (for generating the project)
 
 ## Build and Run
-This project is built using Swift Package Manager.
+This project uses a multi-platform architecture generated via XcodeGen. It supports both macOS and iOS natively.
 
-To build and run from the terminal:
-```bash
-swift run
-```
-
-Alternatively, you can open `Package.swift` in Xcode to build and run the application.
+To build and run:
+1. If you don't have XcodeGen installed, install it via Homebrew:
+   ```bash
+   brew install xcodegen
+   ```
+2. Generate the Xcode project from the terminal:
+   ```bash
+   xcodegen
+   ```
+3. Open the newly created `BlockLock.xcodeproj` file in Xcode.
+4. Select your target (`BlockLock (macOS)` or `BlockLock (iOS)`) from the scheme selector in the top bar.
+5. Click the **Run** button (or press `Cmd+R`) to build and launch the app!
