@@ -3,6 +3,10 @@ import SwiftUI
 import SwiftData
 import AVFoundation
 
+final class OverlayPanel: NSPanel {
+    override var canBecomeKey: Bool { return true }
+}
+
 /// Manages all overlay panels: soft-lock, micro-reminder (all displays), and floating widget.
 /// Singleton — accessed via `OverlayWindowManager.shared`.
 final class OverlayWindowManager {
@@ -45,7 +49,7 @@ final class OverlayWindowManager {
 
         let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
 
-        let panel = NSPanel(
+        let panel = OverlayPanel(
             contentRect: screenRect,
             styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
@@ -126,7 +130,7 @@ final class OverlayWindowManager {
         container: ModelContainer
     ) -> NSPanel {
         // Full-screen panel so the semi-transparent backdrop covers everything
-        let panel = NSPanel(
+        let panel = OverlayPanel(
             contentRect: screen.frame,
             styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
@@ -237,7 +241,7 @@ final class OverlayWindowManager {
         let x = screenRect.maxX - width - 24
         let y = screenRect.minY + 60
 
-        let panel = NSPanel(
+        let panel = OverlayPanel(
             contentRect: NSRect(x: x, y: y, width: width, height: height),
             styleMask: [.nonactivatingPanel, .fullSizeContentView, .resizable],
             backing: .buffered,
@@ -303,7 +307,7 @@ final class OverlayWindowManager {
     }
 
     private func createDailySummaryPanel(on screen: NSScreen, type: SummaryType, tasks: [TaskModel]) -> NSPanel {
-        let panel = NSPanel(
+        let panel = OverlayPanel(
             contentRect: screen.frame,
             styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,

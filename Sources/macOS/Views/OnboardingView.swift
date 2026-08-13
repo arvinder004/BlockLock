@@ -48,6 +48,9 @@ struct OnboardingView: View {
         }
         .frame(width: 550, height: 420)
         .background(Color(NSColor.windowBackgroundColor))
+        .onDisappear {
+            UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        }
     }
     
     // MARK: - Steps

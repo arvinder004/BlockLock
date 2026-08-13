@@ -1,0 +1,35 @@
+name: BlockLock
+options:
+  bundleIdPrefix: com.blocklock
+targets:
+  BlockLock (macOS):
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources: 
+      - path: Sources/macOS
+      - path: Sources/Shared
+    settings:
+      base:
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        INFOPLIST_KEY_LSUIElement: YES
+        SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: YES
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.2.0
+
+  BlockLock (iOS):
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: 
+      - path: Sources/iOS
+      - path: Sources/Shared
+    settings:
+      base:
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: YES
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.2.0
