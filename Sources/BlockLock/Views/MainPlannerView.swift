@@ -8,6 +8,7 @@ struct MainPlannerView: View {
     @Query(sort: \TaskModel.startTime) private var allTasks: [TaskModel]
 
     @State private var showingTaskCreation = false
+    @State private var showingSettings = false
     @State private var editingTask: TaskModel?
     @State private var filterMode: FilterMode = .today
     @State private var selectedDate: Date = Date()
@@ -52,6 +53,9 @@ struct MainPlannerView: View {
         .sheet(item: $editingTask) { task in
             TaskCreationView(editingTask: task)
         }
+        .sheet(isPresented: $showingSettings) {
+            DailySummarySettingsView()
+        }
     }
 
     // MARK: ─── Sidebar ───
@@ -64,6 +68,15 @@ struct MainPlannerView: View {
                 Text("Tasks")
                     .font(.system(.title3, design: .rounded).bold())
                 Spacer()
+                Button(action: { showingSettings = true }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.title3)
+                        .symbolRenderingMode(.hierarchical)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Settings")
+                
                 Button(action: { showingTaskCreation = true }) {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
@@ -151,7 +164,7 @@ struct MainPlannerView: View {
                     .strikethrough(task.isCompleted)
                     .foregroundStyle(task.isCompleted ? .secondary : .primary)
 
-                Text(formatTimeRange(task.startTime, task.endTime))
+                Text(formatTimeRange(task.startTime, task.endTime, showDate: filterMode != .today))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -289,10 +302,18 @@ struct MainPlannerView: View {
         }
     }
 
-    private func formatTimeRange(_ start: Date, _ end: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return "\(f.string(from: start)) – \(f.string(from: end))"
+    private func formatTimeRange(_ start: Date, _ end: Date, showDate: Bool) -> String {
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "h:mm a"
+        
+        let timeStr = "\(timeFormatter.string(from: start)) – \(timeFormatter.string(from: end))"
+        
+        if showDate {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MMM d"
+            return "\(dateFormatter.string(from: start)) • \(timeStr)"
+        }
+        return timeStr
     }
 
     private func shiftDay(_ offset: Int) {

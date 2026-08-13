@@ -12,6 +12,7 @@ final class OverlayWindowManager {
 
     private var softLockPanel: NSPanel?
     private var microReminderPanels: [NSPanel] = []
+    private var dailySummaryPanels: [NSPanel] = []
     private var floatingWidgetPanel: NSPanel?
     private var escapeMonitor: Any?
 
@@ -23,6 +24,9 @@ final class OverlayWindowManager {
 
     /// Whether the floating widget is currently visible.
     var isShowingWidget: Bool { floatingWidgetPanel != nil }
+
+    /// Whether the daily summary is currently visible.
+    var isShowingDailySummary: Bool { !dailySummaryPanels.isEmpty }
 
     private init() {}
 
@@ -273,6 +277,74 @@ final class OverlayWindowManager {
             dismissFloatingWidget()
         } else {
             showFloatingWidget(container: container)
+        }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MARK: - Daily Summary Alarms
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    func triggerDailySummary(type: SummaryType, tasks: [TaskModel], container: ModelContainer) {
+        DispatchQueue.main.async { [weak self] in
+            self?.showDailySummaryOnAllScreens(type: type, tasks: tasks)
+        }
+    }
+
+    private func showDailySummaryOnAllScreens(type: SummaryType, tasks: [TaskModel]) {
+        guard dailySummaryPanels.isEmpty else { return }
+
+        // Play alarm sound on loop
+        playAlertSound(named: "Glass")
+
+        for screen in NSScreen.screens {
+            let panel = createDailySummaryPanel(on: screen, type: type, tasks: tasks)
+            dailySummaryPanels.append(panel)
+        }
+    }
+
+    private func createDailySummaryPanel(on screen: NSScreen, type: SummaryType, tasks: [TaskModel]) -> NSPanel {
+        let panel = NSPanel(
+            contentRect: screen.frame,
+            styleMask: [.nonactivatingPanel, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+
+        panel.level = .floating
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.backgroundColor = NSColor.black.withAlphaComponent(0.6)
+        panel.isOpaque = false
+        panel.hasShadow = false
+        panel.titlebarAppearsTransparent = true
+        panel.titleVisibility = .hidden
+        panel.isMovable = false
+
+        let summaryView = DailySummaryView(
+            type: type,
+            tasks: tasks,
+            onDismiss: { [weak self] in
+                self?.dismissDailySummary()
+            }
+        )
+
+        let hosting = NSHostingView(rootView: summaryView)
+        panel.contentView = hosting
+        panel.makeKeyAndOrderFront(nil)
+
+        return panel
+    }
+
+    func dismissDailySummary() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.alertPlayer?.stop()
+            self.alertPlayer = nil
+
+            for panel in self.dailySummaryPanels {
+                panel.orderOut(nil)
+            }
+            self.dailySummaryPanels.removeAll()
         }
     }
 }

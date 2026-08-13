@@ -24,6 +24,11 @@ final class BackgroundScheduler: ObservableObject {
         // Immediate check on launch
         DispatchQueue.main.async { [weak self] in
             self?.checkTasks()
+            
+            // Display widget by default on startup
+            if !OverlayWindowManager.shared.isShowingWidget {
+                OverlayWindowManager.shared.showFloatingWidget(container: container)
+            }
         }
     }
 
@@ -100,7 +105,7 @@ final class BackgroundScheduler: ObservableObject {
             }
         }
         
-        // 4. Force widget open if there are uncompleted tasks today
+        // 4. Track uncompleted tasks state for the menu bar (but don't force widget open)
         let cal = Calendar.current
         let hasIncomplete = tasks.contains { cal.isDateInToday($0.startTime) }
         
@@ -108,9 +113,54 @@ final class BackgroundScheduler: ObservableObject {
             self.hasUncompletedTasksToday = hasIncomplete
         }
         
-        if hasIncomplete {
-            if !OverlayWindowManager.shared.isShowingWidget {
-                OverlayWindowManager.shared.showFloatingWidget(container: container)
+        // 5. Check Daily Summary Alarms
+        if DailySummarySettings.isEnabled && !OverlayWindowManager.shared.isShowingDailySummary {
+            checkDailySummary()
+        }
+    }
+
+    @MainActor
+    private func checkDailySummary() {
+        let now = Date()
+        let cal = Calendar.current
+        let currentMinutes = cal.component(.hour, from: now) * 60 + cal.component(.minute, from: now)
+        
+        let targetTimes: [(type: SummaryType, minutes: Int)] = [
+            (.morning, DailySummarySettings.morningTime),
+            (.afternoon, DailySummarySettings.afternoonTime),
+            (.night, DailySummarySettings.nightTime)
+        ]
+        
+        for target in targetTimes {
+            let diff = currentMinutes - target.minutes
+            
+            // If the target time has passed today
+            if diff >= 0 {
+                let lastFired = DailySummarySettings.lastFiredDate(for: target.type)
+                let firedToday = lastFired != nil && cal.isDateInToday(lastFired!)
+                
+                if !firedToday {
+                    // Only trigger if it's within a 15-minute window of the alarm time
+                    if diff <= 15 {
+                        DailySummarySettings.setLastFiredDate(now, for: target.type)
+                        
+                        // Fetch ALL tasks (completed and uncompleted) to show in the summary
+                        let descriptor = FetchDescriptor<TaskModel>()
+                        let allTasks = (try? container.mainContext.fetch(descriptor)) ?? []
+                        let todaysTasks = allTasks.filter { cal.isDateInToday($0.startTime) }
+                        
+                        OverlayWindowManager.shared.triggerDailySummary(
+                            type: target.type,
+                            tasks: todaysTasks,
+                            container: container
+                        )
+                        break // Only fire one at a time if multiple are pending
+                    } else {
+                        // It's overdue by more than 15 minutes (e.g. app was closed all day).
+                        // Silently mark as fired to prevent spamming old alarms.
+                        DailySummarySettings.setLastFiredDate(now, for: target.type)
+                    }
+                }
             }
         }
     }

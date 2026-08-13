@@ -149,13 +149,11 @@ struct MenuBarView: View {
                 NSApp.activate(ignoringOtherApps: true)
             }
 
-            if !scheduler.hasUncompletedTasksToday {
-                menuButton(
-                    OverlayWindowManager.shared.isShowingWidget ? "Hide Widget" : "Show Widget",
-                    icon: OverlayWindowManager.shared.isShowingWidget ? "rectangle.on.rectangle.slash" : "rectangle.on.rectangle"
-                ) {
-                    OverlayWindowManager.shared.toggleFloatingWidget(container: scheduler.container)
-                }
+            menuButton(
+                OverlayWindowManager.shared.isShowingWidget ? "Hide Widget" : "Show Widget",
+                icon: OverlayWindowManager.shared.isShowingWidget ? "rectangle.on.rectangle.slash" : "rectangle.on.rectangle"
+            ) {
+                OverlayWindowManager.shared.toggleFloatingWidget(container: scheduler.container)
             }
 
             menuButton(
